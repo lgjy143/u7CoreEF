@@ -7,6 +7,9 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using u7CoreEF.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using u7CoreEF.Infrastructure;
 
 namespace u7CoreEF
 {
@@ -14,7 +17,18 @@ namespace u7CoreEF
     {
         public static void Main(string[] args)
         {
-            BuildWebHost(args).Run();
+            BuildWebHost(args)
+                .MigrateDbContext<AppDbContext>((context, services) =>
+                {
+                    var env = services.GetService<IHostingEnvironment>();
+                    //var settings = services.GetService<IOptions<OrderingSettings>>();
+                    var logger = services.GetService<ILogger<AppDbContextSeed>>();
+
+                    new AppDbContextSeed()
+                       .SeedAsync(context, env, logger)
+                       .Wait();
+                })
+                .Run();
         }
 
         public static IWebHost BuildWebHost(string[] args) =>
